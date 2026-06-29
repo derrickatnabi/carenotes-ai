@@ -1,7 +1,7 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
 
-const client = new Anthropic();
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const NOTE_PROMPTS: Record<string, string> = {
   progress: `You are an Australian aged care documentation specialist. Convert the staff's informal observation into a structured progress note that complies with the Aged Care Quality Standards (ACQSC).
@@ -124,19 +124,15 @@ Date/time: ${dateTime || "Not specified"}
 Care observation/description:
 ${description}`;
 
-    const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      systemInstruction: systemPrompt,
     });
 
-    const content = message.content[0];
-    if (content.type !== "text") {
-      throw new Error("Unexpected response type");
-    }
+    const result = await model.generateContent(userMessage);
+    const text = result.response.text();
 
-    return NextResponse.json({ note: content.text });
+    return NextResponse.json({ note: text });
   } catch (err) {
     console.error("Generate error:", err);
     return NextResponse.json({ error: "Failed to generate note. Please try again." }, { status: 500 });

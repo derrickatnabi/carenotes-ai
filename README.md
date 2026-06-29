@@ -21,7 +21,8 @@ Aged care staff spend 30–40% of their time on documentation. Under the new Age
 ```bash
 npm install
 cp .env.local.example .env.local
-# Add your Anthropic API key to .env.local
+# Add your Gemini API key to .env.local
+# Get a free key at: https://aistudio.google.com/app/apikey
 npm run dev
 ```
 
@@ -31,5 +32,5 @@ Open [http://localhost:3000](http://localhost:3000).
 
 - Next.js 15 (App Router)
 - Tailwind CSS v4
-- Anthropic Claude API (claude-haiku-4-5)
+- Google Gemini 1.5 Flash (free tier: 1,500 req/day)
 - Web Speech API for voice input
