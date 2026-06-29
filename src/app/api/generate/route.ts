@@ -1,7 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextRequest, NextResponse } from "next/server";
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 const NOTE_PROMPTS: Record<string, string> = {
   progress: `You are an Australian aged care documentation specialist. Convert the staff's informal observation into a structured progress note that complies with the Aged Care Quality Standards (ACQSC).
@@ -124,17 +121,34 @@ Date/time: ${dateTime || "Not specified"}
 Care observation/description:
 ${description}`;
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
-      systemInstruction: systemPrompt,
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage },
+        ],
+        max_tokens: 1024,
+      }),
     });
 
-    const result = await model.generateContent(userMessage);
-    const text = result.response.text();
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(err);
+    }
+
+    const data = await res.json();
+    const text = data.choices[0].message.content;
 
     return NextResponse.json({ note: text });
   } catch (err) {
     console.error("Generate error:", err);
-    return NextResponse.json({ error: "Failed to generate note. Please try again." }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
